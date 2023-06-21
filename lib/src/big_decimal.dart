@@ -332,11 +332,6 @@ class BigDecimal implements Comparable<BigDecimal> {
     }
   }
 
-  static int sumScale(int scaleA, int scaleB) {
-    // TODO: We need to check for overflows here
-    return scaleA + scaleB;
-  }
-
   @override
   int compareTo(BigDecimal other) {
     if (_scale == other._scale) {
@@ -420,4 +415,9 @@ class BigDecimal implements Comparable<BigDecimal> {
 
     return b.toString();
   }
+}
+
+int sumScale(int scaleA, int scaleB) {
+  // TODO: We need to check for overflows here
+  return scaleA + scaleB;
 }
