@@ -119,7 +119,6 @@ class BigDecimal implements Comparable<BigDecimal> {
   final BigInt intVal;
   late final int precision = _calculatePrecision();
   final BigInt _scale;
-  int get scale => _scale.toInt();
 
   @override
   bool operator ==(dynamic other) => other is BigDecimal && compareTo(other) == 0;
@@ -425,4 +424,8 @@ class BigDecimal implements Comparable<BigDecimal> {
 
 BigInt sumScale(BigInt scaleA, BigInt scaleB) {
   return scaleA + scaleB;
+}
+
+extension TestGetters on BigDecimal {
+  int get scale => _scale.toInt();
 }
