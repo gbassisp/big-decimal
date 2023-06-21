@@ -19,16 +19,20 @@ const capitalECode = 69;
 const zeroCode = 48;
 const nineCode = 57;
 
+extension _BigIntExtension on int {
+  BigInt toBigInt() => BigInt.from(this);
+}
+
 class BigDecimal implements Comparable<BigDecimal> {
   BigDecimal._({
     required this.intVal,
-    required this.scale,
-  });
+    required BigInt scale,
+  }) : _scale = scale;
 
   factory BigDecimal.fromBigInt(BigInt value) {
     return BigDecimal._(
       intVal: value,
-      scale: 0,
+      scale: BigInt.zero,
     );
   }
 
@@ -90,7 +94,7 @@ class BigDecimal implements Comparable<BigDecimal> {
       if (index >= value.length) {
         return BigDecimal._(
           intVal: BigInt.parse('$integerPart$decimalPart'),
-          scale: decimalPart.length,
+          scale: decimalPart.length.toBigInt(),
         );
       }
     }
@@ -102,7 +106,7 @@ class BigDecimal implements Comparable<BigDecimal> {
         final exponent = int.parse(value.substring(index));
         return BigDecimal._(
           intVal: BigInt.parse('$integerPart$decimalPart'),
-          scale: decimalPart.length - exponent,
+          scale: (decimalPart.length - exponent).toBigInt(),
         );
     }
 
@@ -114,18 +118,19 @@ class BigDecimal implements Comparable<BigDecimal> {
 
   final BigInt intVal;
   late final int precision = _calculatePrecision();
-  final int scale;
+  final BigInt _scale;
+  int get scale => _scale.toInt();
 
   @override
   bool operator ==(dynamic other) => other is BigDecimal && compareTo(other) == 0;
 
-  bool exactlyEquals(dynamic other) => other is BigDecimal && intVal == other.intVal && scale == other.scale;
+  bool exactlyEquals(dynamic other) => other is BigDecimal && intVal == other.intVal && _scale == other._scale;
 
-  BigDecimal operator +(BigDecimal other) => _add(intVal, other.intVal, scale, other.scale);
+  BigDecimal operator +(BigDecimal other) => _add(intVal, other.intVal, _scale.toInt(), other._scale.toInt());
 
-  BigDecimal operator *(BigDecimal other) => BigDecimal._(intVal: intVal * other.intVal, scale: scale + other.scale);
+  BigDecimal operator *(BigDecimal other) => BigDecimal._(intVal: intVal * other.intVal, scale: _scale + other._scale);
 
-  BigDecimal operator -(BigDecimal other) => _add(intVal, -other.intVal, scale, other.scale);
+  BigDecimal operator -(BigDecimal other) => _add(intVal, -other.intVal, _scale.toInt(), other._scale.toInt());
 
   bool operator <(BigDecimal other) => compareTo(other) < 0;
 
@@ -135,47 +140,56 @@ class BigDecimal implements Comparable<BigDecimal> {
 
   bool operator >=(BigDecimal other) => compareTo(other) >= 0;
 
-  BigDecimal operator -() => BigDecimal._(intVal: -intVal, scale: scale);
+  BigDecimal operator -() => BigDecimal._(intVal: -intVal, scale: _scale);
 
-  BigDecimal abs() => BigDecimal._(intVal: intVal.abs(), scale: scale);
+  BigDecimal abs() => BigDecimal._(intVal: intVal.abs(), scale: _scale);
 
   BigDecimal divide(
     BigDecimal divisor, {
     RoundingMode roundingMode = RoundingMode.UNNECESSARY,
     int? scale,
   }) =>
-      _divide(intVal, this.scale, divisor.intVal, divisor.scale, scale ?? this.scale, roundingMode);
+      _divide(
+        intVal,
+        this._scale.toInt(),
+        divisor.intVal,
+        divisor._scale.toInt(),
+        scale ?? this._scale.toInt(),
+        roundingMode,
+      );
 
   BigDecimal pow(int n) {
     if (n >= 0 && n <= 999999999) {
       // TODO: Check scale of this multiplication
-      final newScale = scale * n;
+      final newScale = _scale * n.toBigInt();
       return BigDecimal._(intVal: intVal.pow(n), scale: newScale);
     }
+    // why? BigInt is arbitrarily large; BigDecimal should be as well
     throw Exception('Invalid operation: Exponent should be between 0 and 999999999');
   }
 
-  double toDouble() => intVal.toDouble() / BigInt.from(10).pow(scale).toDouble();
+  double toDouble() => intVal.toDouble() / BigInt.from(10).pow(_scale.toInt()).toDouble();
   BigInt toBigInt({RoundingMode roundingMode = RoundingMode.UNNECESSARY}) =>
       withScale(0, roundingMode: roundingMode).intVal;
   int toInt({RoundingMode roundingMode = RoundingMode.UNNECESSARY}) => toBigInt(roundingMode: roundingMode).toInt();
 
   BigDecimal withScale(
-    int newScale, {
+    int newScaleValue, {
     RoundingMode roundingMode = RoundingMode.UNNECESSARY,
   }) {
-    if (scale == newScale) {
+    final newScale = newScaleValue.toBigInt();
+    if (_scale == newScale) {
       return this;
     } else if (intVal.sign == 0) {
       return BigDecimal._(intVal: BigInt.zero, scale: newScale);
     } else {
-      if (newScale > scale) {
-        final drop = sumScale(newScale, -scale);
+      if (newScale > _scale) {
+        final drop = sumScale(newScale.toInt(), -_scale.toInt());
         final intResult = intVal * BigInt.from(10).pow(drop);
         return BigDecimal._(intVal: intResult, scale: newScale);
       } else {
-        final drop = sumScale(scale, -newScale);
-        return _divideAndRound(intVal, BigInt.from(10).pow(drop), newScale, roundingMode, newScale);
+        final drop = sumScale(_scale.toInt(), -newScale.toInt());
+        return _divideAndRound(intVal, BigInt.from(10).pow(drop), newScale.toInt(), roundingMode, newScale.toInt());
       }
     }
   }
@@ -191,13 +205,13 @@ class BigDecimal implements Comparable<BigDecimal> {
   static BigDecimal _add(BigInt intValA, BigInt intValB, int scaleA, int scaleB) {
     final scaleDiff = scaleA - scaleB;
     if (scaleDiff == 0) {
-      return BigDecimal._(intVal: intValA + intValB, scale: scaleA);
+      return BigDecimal._(intVal: intValA + intValB, scale: scaleA.toBigInt());
     } else if (scaleDiff < 0) {
       final scaledX = intValA * BigInt.from(10).pow(-scaleDiff);
-      return BigDecimal._(intVal: scaledX + intValB, scale: scaleB);
+      return BigDecimal._(intVal: scaledX + intValB, scale: scaleB.toBigInt());
     } else {
       final scaledY = intValB * BigInt.from(10).pow(scaleDiff);
-      return BigDecimal._(intVal: intValA + scaledY, scale: scaleA);
+      return BigDecimal._(intVal: intValA + scaledY, scale: scaleA.toBigInt());
     }
   }
 
@@ -210,7 +224,7 @@ class BigDecimal implements Comparable<BigDecimal> {
     RoundingMode roundingMode,
   ) {
     if (dividend == BigInt.zero) {
-      return BigDecimal._(intVal: BigInt.zero, scale: scale);
+      return BigDecimal._(intVal: BigInt.zero, scale: scale.toBigInt());
     }
     if (sumScale(scale, divisorScale) > dividendScale) {
       final newScale = scale + divisorScale;
@@ -238,14 +252,14 @@ class BigDecimal implements Comparable<BigDecimal> {
     if (remainder != BigInt.zero) {
       if (_needIncrement(divisor, roundingMode, quotientPositive, quotient, remainder)) {
         final intResult = quotient + (quotientPositive ? BigInt.one : -BigInt.one);
-        return BigDecimal._(intVal: intResult, scale: scale);
+        return BigDecimal._(intVal: intResult, scale: scale.toBigInt());
       }
-      return BigDecimal._(intVal: quotient, scale: scale);
+      return BigDecimal._(intVal: quotient, scale: scale.toBigInt());
     } else {
       if (preferredScale != scale) {
         return createAndStripZerosForScale(quotient, scale, preferredScale);
       } else {
-        return BigDecimal._(intVal: quotient, scale: scale);
+        return BigDecimal._(intVal: quotient, scale: scale.toBigInt());
       }
     }
   }
@@ -272,7 +286,7 @@ class BigDecimal implements Comparable<BigDecimal> {
       scaleMut = sumScale(scaleMut, -1);
     }
 
-    return BigDecimal._(intVal: intValMut, scale: scaleMut);
+    return BigDecimal._(intVal: intValMut, scale: scaleMut.toBigInt());
   }
 
   static bool _needIncrement(
@@ -325,7 +339,7 @@ class BigDecimal implements Comparable<BigDecimal> {
 
   @override
   int compareTo(BigDecimal other) {
-    if (scale == other.scale) {
+    if (_scale == other._scale) {
       return intVal != other.intVal ? (intVal > other.intVal ? 1 : -1) : 0;
     }
 
@@ -339,23 +353,23 @@ class BigDecimal implements Comparable<BigDecimal> {
       return 0;
     }
     //TODO: Optimize this
-    return _add(intVal, -other.intVal, scale, other.scale).intVal.sign;
+    return _add(intVal, -other.intVal, _scale.toInt(), other._scale.toInt()).intVal.sign;
   }
 
   @override
-  int get hashCode => 31 * intVal.hashCode + scale;
+  int get hashCode => 31 * intVal.hashCode + _scale.toInt();
 
   @override
   String toString() {
-    if (scale == 0) {
+    if (_scale == 0) {
       return intVal.toString();
     }
 
     final intStr = intVal.abs().toString();
-    final adjusted = (intStr.length - 1) - scale;
+    final adjusted = (intStr.length - 1) - _scale.toInt();
 
     // Java's heuristic to avoid too many decimal places
-    if (scale >= 0 && adjusted >= -6) {
+    if (_scale >= BigInt.zero && adjusted >= -6) {
       return toPlainString();
     }
 
@@ -379,29 +393,29 @@ class BigDecimal implements Comparable<BigDecimal> {
   }
 
   String toPlainString() {
-    if (scale == 0) {
+    if (_scale == BigInt.zero) {
       return intVal.toString();
     }
 
     final intStr = intVal.abs().toString();
     final b = StringBuffer(intVal.isNegative ? '-' : '');
 
-    if (scale > 0) {
-      if (intStr.length > scale) {
-        final integerPart = intStr.substring(0, intStr.length - scale);
+    if (_scale > BigInt.zero) {
+      if (intStr.length > _scale.toInt()) {
+        final integerPart = intStr.substring(0, intStr.length - _scale.toInt());
         b.write(integerPart);
 
-        final decimalPart = intStr.substring(intStr.length - scale);
+        final decimalPart = intStr.substring(intStr.length - _scale.toInt());
         if (decimalPart.isNotEmpty) {
           b.write('.$decimalPart');
         }
       } else {
         b
           ..write('0.')
-          ..write(intStr.padLeft(scale, '0'));
+          ..write(intStr.padLeft(_scale.toInt(), '0'));
       }
     } else {
-      b.write(intStr.padRight(scale.abs() + intStr.length, '0'));
+      b.write(intStr.padRight(_scale.toInt().abs() + intStr.length, '0'));
     }
 
     return b.toString();
