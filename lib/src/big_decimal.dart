@@ -1,5 +1,6 @@
 // ignore_for_file: constant_identifier_names
 
+/// rounding modes for operations; defaults to [RoundingMode.UNNECESSARY]
 enum RoundingMode {
   UP,
   DOWN,
@@ -8,6 +9,8 @@ enum RoundingMode {
   HALF_UP,
   HALF_DOWN,
   HALF_EVEN,
+
+  /// does not round at all; throws if the result cannot be represented exactly.
   UNNECESSARY,
 }
 
@@ -19,16 +22,22 @@ const capitalECode = 69;
 const zeroCode = 48;
 const nineCode = 57;
 
+/// make it easier to incrementally change int fields to BigInt
 extension _BigIntExtension on int {
   BigInt toBigInt() => BigInt.from(this);
 }
 
+/// An arbitrarily large decimal value.
+///
+/// Big decimals are signed and can have an arbitrary number of
+/// significant digits, only limited by memory.
 class BigDecimal implements Comparable<BigDecimal> {
   BigDecimal._({
     required this.intVal,
     required BigInt scale,
   }) : _scale = scale;
 
+  /// Converts a [BigInt] to a [BigDecimal].
   factory BigDecimal.fromBigInt(BigInt value) {
     return BigDecimal._(
       intVal: value,
@@ -36,8 +45,13 @@ class BigDecimal implements Comparable<BigDecimal> {
     );
   }
 
+  /// A big decimal with numerical value 0
   static final zero = BigDecimal.fromBigInt(BigInt.zero);
+
+  /// A big decimal with numerical value 1
   static final one = BigDecimal.fromBigInt(BigInt.one);
+
+  /// A big decimal with numerical value 2
   static final two = BigDecimal.fromBigInt(BigInt.two);
 
   static int nextNonDigit(String value, [int start = 0]) {
@@ -51,6 +65,7 @@ class BigDecimal implements Comparable<BigDecimal> {
     return index;
   }
 
+  /// Parses [source] as a, possibly signed, decimal literal and returns its value. Otherwise returns null.
   static BigDecimal? tryParse(String value) {
     try {
       return BigDecimal.parse(value);
@@ -59,6 +74,7 @@ class BigDecimal implements Comparable<BigDecimal> {
     }
   }
 
+  /// Parses [source] as a, possibly signed, decimal literal and returns its value. Otherwise throws [Exception].
   factory BigDecimal.parse(String value) {
     var sign = '';
     var index = 0;
@@ -116,6 +132,7 @@ class BigDecimal implements Comparable<BigDecimal> {
     );
   }
 
+  /// integer value of this big decimal
   final BigInt intVal;
   late final int precision = _calculatePrecision();
   final BigInt _scale;
@@ -422,10 +439,12 @@ class BigDecimal implements Comparable<BigDecimal> {
   }
 }
 
+/// Sum two scales
 BigInt sumScale(BigInt scaleA, BigInt scaleB) {
   return scaleA + scaleB;
 }
 
+/// Getters to avoid breaking test cases while fixing overflow issues
 extension TestGetters on BigDecimal {
   int get scale => _scale.toInt();
 }
