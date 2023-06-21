@@ -378,7 +378,7 @@ class BigDecimal implements Comparable<BigDecimal> {
 
   @override
   String toString() {
-    if (_scale == 0) {
+    if (_scale == BigInt.zero) {
       return intVal.toString();
     }
 
