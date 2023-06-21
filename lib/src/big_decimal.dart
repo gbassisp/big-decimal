@@ -184,12 +184,18 @@ class BigDecimal implements Comparable<BigDecimal> {
       return BigDecimal._(intVal: BigInt.zero, scale: newScale);
     } else {
       if (newScale > _scale) {
-        final drop = sumScale(newScale.toInt(), -_scale.toInt());
-        final intResult = intVal * BigInt.from(10).pow(drop);
+        final drop = sumScale(newScale, -_scale);
+        final intResult = intVal * BigInt.from(10).pow(drop.toInt());
         return BigDecimal._(intVal: intResult, scale: newScale);
       } else {
-        final drop = sumScale(_scale.toInt(), -newScale.toInt());
-        return _divideAndRound(intVal, BigInt.from(10).pow(drop), newScale.toInt(), roundingMode, newScale.toInt());
+        final drop = sumScale(_scale, -newScale);
+        return _divideAndRound(
+          intVal,
+          BigInt.from(10).pow(drop.toInt()),
+          newScale.toInt(),
+          roundingMode,
+          newScale.toInt(),
+        );
       }
     }
   }
@@ -226,15 +232,15 @@ class BigDecimal implements Comparable<BigDecimal> {
     if (dividend == BigInt.zero) {
       return BigDecimal._(intVal: BigInt.zero, scale: scale.toBigInt());
     }
-    if (sumScale(scale, divisorScale) > dividendScale) {
+    if (sumScale(scale.toBigInt(), divisorScale.toBigInt()) > dividendScale.toBigInt()) {
       final newScale = scale + divisorScale;
       final raise = newScale - dividendScale;
       final scaledDividend = dividend * BigInt.from(10).pow(raise);
       return _divideAndRound(scaledDividend, divisor, scale, roundingMode, scale);
     } else {
-      final newScale = sumScale(dividendScale, -scale);
-      final raise = newScale - divisorScale;
-      final scaledDivisor = divisor * BigInt.from(10).pow(raise);
+      final newScale = sumScale(dividendScale.toBigInt(), -scale.toBigInt());
+      final raise = newScale - divisorScale.toBigInt();
+      final scaledDivisor = divisor * BigInt.from(10).pow(raise.toInt());
       return _divideAndRound(dividend, scaledDivisor, scale, roundingMode, scale);
     }
   }
@@ -271,9 +277,9 @@ class BigDecimal implements Comparable<BigDecimal> {
   ) {
     final ten = BigInt.from(10);
     var intValMut = intVal;
-    var scaleMut = scale;
+    var scaleMut = scale.toBigInt();
 
-    while (intValMut.compareTo(ten) >= 0 && scaleMut > preferredScale) {
+    while (intValMut.compareTo(ten) >= 0 && scaleMut > preferredScale.toBigInt()) {
       if (intValMut.isOdd) {
         break;
       }
@@ -283,10 +289,10 @@ class BigDecimal implements Comparable<BigDecimal> {
         break;
       }
       intValMut = intValMut ~/ ten;
-      scaleMut = sumScale(scaleMut, -1);
+      scaleMut = sumScale(scaleMut, -BigInt.one);
     }
 
-    return BigDecimal._(intVal: intValMut, scale: scaleMut.toBigInt());
+    return BigDecimal._(intVal: intValMut, scale: scaleMut);
   }
 
   static bool _needIncrement(
@@ -417,7 +423,6 @@ class BigDecimal implements Comparable<BigDecimal> {
   }
 }
 
-int sumScale(int scaleA, int scaleB) {
-  // TODO: We need to check for overflows here
+BigInt sumScale(BigInt scaleA, BigInt scaleB) {
   return scaleA + scaleB;
 }

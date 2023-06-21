@@ -509,7 +509,7 @@ void main() {
       expect(result2.isNegative, isFalse);
 
       // with the above in mind, we can check that sumScale will not overflow
-      final result3 = sumScale(limit, limit);
+      final result3 = sumScale(limit2, limit2);
       expect(result3.isNegative, isFalse);
     });
   });
