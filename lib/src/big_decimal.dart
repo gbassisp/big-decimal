@@ -117,10 +117,10 @@ class BigDecimal implements Comparable<BigDecimal> {
   final int scale;
 
   @override
-  bool operator ==(dynamic other) =>
+  bool operator ==(Object other) =>
       other is BigDecimal && compareTo(other) == 0;
 
-  bool exactlyEquals(dynamic other) =>
+  bool exactlyEquals(Object? other) =>
       other is BigDecimal && intVal == other.intVal && scale == other.scale;
 
   BigDecimal operator +(BigDecimal other) =>
