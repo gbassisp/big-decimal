@@ -49,9 +49,9 @@ class BigDecimal implements Comparable<BigDecimal> {
     );
   }
 
-  static BigDecimal zero = BigDecimal.fromBigInt(BigInt.zero);
-  static BigDecimal one = BigDecimal.fromBigInt(BigInt.one);
-  static BigDecimal two = BigDecimal.fromBigInt(BigInt.two);
+  static final zero = BigDecimal.fromBigInt(BigInt.zero);
+  static final one = BigDecimal.fromBigInt(BigInt.one);
+  static final two = BigDecimal.fromBigInt(BigInt.two);
 
   static int nextNonDigit(String value, [int start = 0]) {
     var index = start;
