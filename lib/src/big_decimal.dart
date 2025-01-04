@@ -24,7 +24,9 @@ enum RoundingMode {
   /// towards zero if remainder comparison to half divisor is even and [BigDecimal] is odd
   HALF_EVEN,
 
-  /// does not round at all. Throws if not exact and needs rounding
+  /// does not round at all.
+  ///
+  /// Throws [Exception] if not exact and needs rounding
   UNNECESSARY,
 }
 
@@ -36,12 +38,14 @@ const _capitalECode = 69;
 const _zeroCode = 48;
 const _nineCode = 57;
 
+/// representation of an arbitrarily large decimal number
 class BigDecimal implements Comparable<BigDecimal> {
   BigDecimal._({
     required this.intVal,
     required this.scale,
   });
 
+  /// factory constructor of a [BigDecimal] from a [BigInt]
   factory BigDecimal.fromBigInt(BigInt value) {
     return BigDecimal._(
       intVal: value,
@@ -49,8 +53,13 @@ class BigDecimal implements Comparable<BigDecimal> {
     );
   }
 
+  /// a [BigDecimal] with a numerical value of 0
   static final zero = BigDecimal.fromBigInt(BigInt.zero);
+
+  /// a [BigDecimal] with a numerical value of 1
   static final one = BigDecimal.fromBigInt(BigInt.one);
+
+  /// a [BigDecimal] with a numerical value of 2
   static final two = BigDecimal.fromBigInt(BigInt.two);
 
   static int nextNonDigit(String value, [int start = 0]) {
@@ -64,6 +73,7 @@ class BigDecimal implements Comparable<BigDecimal> {
     return index;
   }
 
+  /// try to create a [BigDecimal] from a [String]. Returns null if invalid
   static BigDecimal? tryParse(String value) {
     try {
       return BigDecimal.parse(value);
@@ -72,6 +82,9 @@ class BigDecimal implements Comparable<BigDecimal> {
     }
   }
 
+  /// try to create a [BigDecimal] from a [String].
+  ///
+  /// Throws [Exception] if invalid
   factory BigDecimal.parse(String value) {
     var sign = '';
     var index = 0;
@@ -129,38 +142,57 @@ class BigDecimal implements Comparable<BigDecimal> {
     );
   }
 
+  /// the arbitrarily large numeric value without scale
   final BigInt intVal;
+
+  /// precision of the decimal digits of this
   late final int precision = _calculatePrecision();
+
+  /// scale of this [BigDecimal]
   final int scale;
 
   @override
   bool operator ==(Object other) =>
       other is BigDecimal && compareTo(other) == 0;
 
+  /// compares this with [other] for both value and scale
   bool exactlyEquals(Object? other) =>
       other is BigDecimal && intVal == other.intVal && scale == other.scale;
 
+  /// adds this to [other]
   BigDecimal operator +(BigDecimal other) =>
       _add(intVal, other.intVal, scale, other.scale);
 
+  /// multiply this with [other]
   BigDecimal operator *(BigDecimal other) =>
       BigDecimal._(intVal: intVal * other.intVal, scale: scale + other.scale);
 
+  /// subtracts this to [other]
   BigDecimal operator -(BigDecimal other) =>
       _add(intVal, -other.intVal, scale, other.scale);
 
+  /// Whether this is less than [other].
   bool operator <(BigDecimal other) => compareTo(other) < 0;
 
+  /// Whether this is less than or equal to [other].
   bool operator <=(BigDecimal other) => compareTo(other) <= 0;
 
+  /// Whether this is greater than [other].
   bool operator >(BigDecimal other) => compareTo(other) > 0;
 
+  /// Whether this is greater than or equal to [other].
   bool operator >=(BigDecimal other) => compareTo(other) >= 0;
 
+  /// Negates this big decimal
   BigDecimal operator -() => BigDecimal._(intVal: -intVal, scale: scale);
 
+  /// Returns the absolute value of this
   BigDecimal abs() => BigDecimal._(intVal: intVal.abs(), scale: scale);
 
+  /// divides this number by [divisor]. Defaults to not rounding the number.
+  ///
+  /// Throws [Exception] if rounding is [RoundingMode.UNNECESSARY] but rounding
+  /// is actually necessary.
   BigDecimal divide(
     BigDecimal divisor, {
     RoundingMode roundingMode = RoundingMode.UNNECESSARY,
@@ -169,6 +201,7 @@ class BigDecimal implements Comparable<BigDecimal> {
       _divide(intVal, this.scale, divisor.intVal, divisor.scale,
           scale ?? this.scale, roundingMode);
 
+  /// this to the power of [n]
   BigDecimal pow(int n) {
     if (n >= 0 && n <= 999999999) {
       // TODO: Check scale of this multiplication
@@ -179,13 +212,29 @@ class BigDecimal implements Comparable<BigDecimal> {
         'Invalid operation: Exponent should be between 0 and 999999999');
   }
 
+  /// returns this as a [double]
   double toDouble() =>
       intVal.toDouble() / BigInt.from(10).pow(scale).toDouble();
+
+  /// returns this as a [BigInt] with the desired [roundingMode]
+  ///
+  /// Throws [Exception] if rounding is [RoundingMode.UNNECESSARY] but rounding
+  /// is actually necessary.
   BigInt toBigInt({RoundingMode roundingMode = RoundingMode.UNNECESSARY}) =>
       withScale(0, roundingMode: roundingMode).intVal;
+
+  /// returns this as a [int] with the desired [roundingMode]
+  ///
+  /// Throws [Exception] if rounding is [RoundingMode.UNNECESSARY] but rounding
+  /// is actually necessary.
   int toInt({RoundingMode roundingMode = RoundingMode.UNNECESSARY}) =>
       toBigInt(roundingMode: roundingMode).toInt();
 
+  /// returns a new [BigDecimal] with the desired [newScale]. May round by
+  /// [roundingMode].
+  ///
+  /// Throws [Exception] if rounding is [RoundingMode.UNNECESSARY] but rounding
+  /// is actually necessary.
   BigDecimal withScale(
     int newScale, {
     RoundingMode roundingMode = RoundingMode.UNNECESSARY,
@@ -406,6 +455,7 @@ class BigDecimal implements Comparable<BigDecimal> {
     return b.toString();
   }
 
+  /// returns its [String] represantation without using exponential notation
   String toPlainString() {
     if (scale == 0) {
       return intVal.toString();
