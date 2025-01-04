@@ -287,9 +287,9 @@ void main() {
           String down,
           String ceiling,
           String floor,
-          String half_up,
-          String half_down,
-          String half_even,
+          String halfUp,
+          String halfDown,
+          String halfEven,
           Object unnecessary,
         ) {
           BigDecimal round(RoundingMode mode) =>
@@ -300,11 +300,11 @@ void main() {
               reason: 'CEILING');
           expect(round(RoundingMode.FLOOR), exactly(floor.dec),
               reason: 'FLOOR');
-          expect(round(RoundingMode.HALF_UP), exactly(half_up.dec),
+          expect(round(RoundingMode.HALF_UP), exactly(halfUp.dec),
               reason: 'HALF_UP');
-          expect(round(RoundingMode.HALF_DOWN), exactly(half_down.dec),
+          expect(round(RoundingMode.HALF_DOWN), exactly(halfDown.dec),
               reason: 'HALF_DOWN');
-          expect(round(RoundingMode.HALF_EVEN), exactly(half_even.dec),
+          expect(round(RoundingMode.HALF_EVEN), exactly(halfEven.dec),
               reason: 'HALF_EVEN');
           if (unnecessary is String) {
             expect(round(RoundingMode.UNNECESSARY), exactly(unnecessary.dec),
