@@ -1,11 +1,11 @@
 name: big_decimal
-version: 0.5.0
+version: 0.6.0
 description: >
   A bugless implementation of BigDecimal in Dart based on Java's BigDecimal
 
 repository: https://github.com/bugless/big-decimal
 environment:
-  sdk: ">=2.12.0 <3.0.0"
+  sdk: ">=2.12.0 <4.0.0"
 
 dev_dependencies:
   lints: ^5.1.1

@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.6.0
+- Fix static analysis issues
+- Add support for Dart 3
+- Remove internal members that were exposed to the API
+
 ## 0.5.0
 - Add toPlainString()
 
