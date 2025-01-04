@@ -1,13 +1,30 @@
+// enum is using screaming snake case due to a direct migration from java
 // ignore_for_file: constant_identifier_names
 
+/// rounding mode used when doing operations on a [BigDecimal]
 enum RoundingMode {
+  /// away from zero
   UP,
+
+  /// towards zero
   DOWN,
+
+  /// towards +infinity
   CEILING,
+
+  /// towards -infinity
   FLOOR,
+
+  /// away from zero if remainder comparison to half divisor is even
   HALF_UP,
+
+  /// towards zero if remainder comparison to half divisor is even
   HALF_DOWN,
+
+  /// towards zero if remainder comparison to half divisor is even and [BigDecimal] is odd
   HALF_EVEN,
+
+  /// does not round at all. Throws if not exact and needs rounding
   UNNECESSARY,
 }
 
