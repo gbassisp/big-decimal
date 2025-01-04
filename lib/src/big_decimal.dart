@@ -62,7 +62,7 @@ class BigDecimal implements Comparable<BigDecimal> {
   /// a [BigDecimal] with a numerical value of 2
   static final two = BigDecimal.fromBigInt(BigInt.two);
 
-  static int nextNonDigit(String value, [int start = 0]) {
+  static int _nextNonDigit(String value, [int start = 0]) {
     var index = start;
     for (; index < value.length; index++) {
       final code = value.codeUnitAt(index);
@@ -102,7 +102,7 @@ class BigDecimal implements Comparable<BigDecimal> {
         break;
     }
 
-    nextIndex = nextNonDigit(value, index);
+    nextIndex = _nextNonDigit(value, index);
     final integerPart = '$sign${value.substring(index, nextIndex)}';
     index = nextIndex;
 
@@ -113,7 +113,7 @@ class BigDecimal implements Comparable<BigDecimal> {
     var decimalPart = '';
     if (value.codeUnitAt(index) == _dotCode) {
       index++;
-      nextIndex = nextNonDigit(value, index);
+      nextIndex = _nextNonDigit(value, index);
       decimalPart = value.substring(index, nextIndex);
       index = nextIndex;
 
@@ -324,14 +324,14 @@ class BigDecimal implements Comparable<BigDecimal> {
       return BigDecimal._(intVal: quotient, scale: scale);
     } else {
       if (preferredScale != scale) {
-        return createAndStripZerosForScale(quotient, scale, preferredScale);
+        return _createAndStripZerosForScale(quotient, scale, preferredScale);
       } else {
         return BigDecimal._(intVal: quotient, scale: scale);
       }
     }
   }
 
-  static BigDecimal createAndStripZerosForScale(
+  static BigDecimal _createAndStripZerosForScale(
     BigInt intVal,
     int scale,
     int preferredScale,
